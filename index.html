@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrazione</title>
+    <style>
+        body{ font-family: Arial; text-align:center; margin-top:100px; }
+        input, button{ padding:10px; font-size:18px; margin-top:10px; }
+    </style>
+</head>
+<body>
+    <h1>Inserisci il tuo nome</h1>
+    <input type="text" id="nome" placeholder="Nome utente">
+    <br>
+    <button id="btn">Entra</button>
+
+    <script>
+        const btn = document.getElementById("btn");
+        btn.addEventListener("click", () => {
+            const nome = document.getElementById("nome").value.trim();
+            if(nome === ""){
+                alert("Inserisci un nome!");
+                return;
+            }
+            localStorage.setItem("nomeUtente", nome);
+            window.location.href = "impiccato.html"; // Rimanda al gioco
+        });
+    </script>
+</body>
+</html>

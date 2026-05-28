@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indovina il Numero - Impiccato</title>
+    <style>
+        body{ font-family: Arial; text-align:center; margin-top:30px; background:white; }
+        input, button{ padding:10px; font-size:18px; margin-top:10px; }
+        #tentativi{ margin-top:15px; color:red; font-size:20px; }
+        canvas{ margin-top:20px; border:2px solid black; }
+        button{ cursor:pointer; }
+    </style>
+</head>
+<body>
+    <h1 id="msg"></h1>
+    <input type="number" id="input" min="1" max="100">
+    <button id="btn">Prova</button>
+    <div id="tentativi">Tentativi: 7</div>
+    <canvas id="canvas" width="200" height="250"></canvas>
+    <br><br>
+    <button onclick="location.reload()">Ricomincia</button>
+
+    <script>
+        // Controllo se l'utente si è registrato
+        const nomeUtente = localStorage.getItem("nomeUtente");
+        if (!nomeUtente) {
+            window.location.href = "registrazione.html";
+        }
+
+        const msg = document.getElementById("msg");
+        msg.textContent = "Benvenuto " + nomeUtente + "! Indovina il numero segreto!";
+
+        // Gioco
+        const numeroSegreto = Math.floor(Math.random() * 100) + 1;
+        let tentativi = 7;
+        let step = 0;
+
+        const input = document.getElementById("input");
+        const btn = document.getElementById("btn");
+        const tent = document.getElementById("tentativi");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        function base(){
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(20,230); ctx.lineTo(20,20); ctx.lineTo(120,20); ctx.lineTo(120,40);
+            ctx.stroke();
+        }
+        base();
+
+        function drawPart(i){
+            switch(i){
+                case 0: ctx.beginPath(); ctx.moveTo(120,40); ctx.lineTo(120,70); ctx.stroke(); break;
+                case 1: ctx.beginPath(); ctx.arc(120,90,20,0,Math.PI*2); ctx.stroke(); break;
+                case 2: ctx.beginPath(); ctx.moveTo(120,110); ctx.lineTo(120,170); ctx.stroke(); break;
+                case 3: ctx.beginPath(); ctx.moveTo(120,130); ctx.lineTo(90,150); ctx.stroke(); break;
+                case 4: ctx.beginPath(); ctx.moveTo(120,130); ctx.lineTo(150,150); ctx.stroke(); break;
+                case 5: ctx.beginPath(); ctx.moveTo(120,170); ctx.lineTo(90,210); ctx.stroke(); break;
+                case 6: ctx.beginPath(); ctx.moveTo(120,170); ctx.lineTo(150,210); ctx.stroke(); break;
+            }
+        }
+
+        // FUNZIONE DEL TUO TUTORIAL VIDEO
+        function inviaDati(punteggioOttenuto) {
+            const parametri = {
+                nomeGioco: "Impiccato",
+                nomeSquadra: nomeUtente,
+                punteggio: punteggioOttenuto
+            };
+
+            const url = new URL("https://arcade3d.vercel.app/api/assegna-punti");
+            url.search = new URLSearchParams(parametri).toString();
+
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Errore HTTP del Server: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("Risposta ricevuta da Vercel API:", data);
+                    if (data.success) {
+                        console.log("Scrittura sul DB completata con successo!");
+                    } else {
+                        console.error("L'API ha risposto con un errore:", data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error("Errore durante la chiamata di salvataggio:", error);
+                });
+        }
+
+        btn.addEventListener("click", () => {
+            if(tentativi <= 0) return;
+            const n = Number(input.value);
+
+            if(input.value.trim() === "" || n < 1 || n > 100){
+                msg.textContent = "Inserisci un numero da 1 a 100!";
+                return;
+            }
+
+            if(n === numeroSegreto){
+                const punteggio = tentativi * 10;
+                msg.textContent = "Hai vinto! 🎉 Punteggio: " + punteggio;
+                document.body.style.background = "lightgreen";
+
+                // Invia i dati all'API quando l'utente vince
+                inviaDati(punteggio);
+
+                btn.disabled = true;
+                input.disabled = true;
+                return;
+            }
+
+            tentativi--;
+            tent.textContent = "Tentativi: " + tentativi;
+            drawPart(step);
+            step++;
+
+            if(n < numeroSegreto){
+                msg.textContent = "Il numero è PIÙ GRANDE ⬆️";
+            }else{
+                msg.textContent = "Il numero è PIÙ PICCOLO ⬇️";
+            }
+
+            if(tentativi === 0){
+                msg.textContent = "GAME OVER 💀 - Il numero era " + numeroSegreto;
+                document.body.style.background = "black";
+                msg.style.color = "white";
+                btn.disabled = true;
+                input.disabled = true;
+            }
+            input.value = "";
+        });
+
+        input.addEventListener("keydown", (e) => {
+            if(e.key === "Enter"){ btn.click(); }
+        });
+    </script>
+</body>
+</html>
